@@ -35,6 +35,7 @@ app.get('/', (req, res) => {
         WriteHtml(res, response);
     }).catch((err) => {
         Write404Error(res);
+        Testsql();
     });
 });
 
@@ -96,5 +97,12 @@ function WriteHtml(res, html) {
     res.end();
 }
 
+function TestSql()
+{
+db.each("SELECT * FROM Consumption WHERE state_abbreviation = ? ORDER BY year",["MN"],(err, rows)=>
+{
+	console.log(rows);
+});
+}
 
 var server = app.listen(port);
