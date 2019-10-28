@@ -177,9 +177,18 @@ app.get('/state/:selected_state', (req, res) => {
 app.get('/energy-type/:selected_energy_type', (req, res) => {
 	console.log("SELECTED ENERGY TYPE: " + req.params.selected_energy_type);
     ReadFile(path.join(template_dir, 'energy.html')).then((template) => {
-        let response = template;
+        let sql = "SELECT " + req.params.selected_energy_type + ", STATE_ABBREVIATION, YEAR FROM Consumption ORDER BY YEAR";
+		db.all(sql, [], (err, rows) => {
+			if (err) {
+				throw err;
+			}
+			
+			//Call funtion to get html response to be sent back
+			let response = GetHtmlType(template, rows, req.params.selected_energy_type);
         // modify `response` here
+		console.log(response);
         WriteHtml(res, response);
+		});
     }).catch((err) => {
         Write404Error(res);
     });
