@@ -71,6 +71,24 @@ app.get('/state/:selected_state', (req, res) => {
 	console.log("SELECTED STATE: " + req.params.selected_state);
     ReadFile(path.join(template_dir, 'state.html')).then((template) => {
         let response = template;
+		let sql = "SELECT coal FROM Consumption WHERE state_abbreviation='"+req.params.selected_state+"'";
+		
+		db.all(sql, [], (err, rows) => {
+			if (err) {
+				throw err;
+			}
+			
+			//coal counts by year
+			let coal_counts="[";		
+			for(i = 0; i < Object.keys(rows).length; i++){
+				coal_counts = coal_counts + rows[i].coal;
+				if(i != (Object.keys(rows).length - 1)){
+					coal_counts = coal_counts + ", ";
+				}
+			}
+			coal_counts=coal_counts + "]";
+			console.log("coal: " + coal_counts);
+		});
         // modify `response` here
         WriteHtml(res, response);
     }).catch((err) => {
@@ -99,11 +117,11 @@ function GetHtmlYear(template, rows, year){
 
 	//Length of query, should be 51 for the 50 states + Washington DC
 	let length = Object.keys(rows).length;
-	console.log("LENGTH: " + length);
+	//console.log("LENGTH: " + length);
 	//Table data that will be inserted in consumption by state table
 	let table_data="";
 	for(i = 0; i < length; i++){
-		console.log(rows[i].coal);
+		//console.log(rows[i].coal);
 		//Start new row in table
 		table_data=table_data+"<tr>";
 		
@@ -148,7 +166,7 @@ function GetHtmlYear(template, rows, year){
 	// modify title
 	response=response.replace("<title>US Energy Consumption</title>", year + " US Energy Consumption");
 	// modify variables
-	//response=response.replace("var year", "var year=2017");
+	response=response.replace("var year", "var year="+year);
 	response=response.replace("var coal_count", "var coal_count="+coal_count);
 	response=response.replace("var natural_gas_count", "var natural_gas_count="+natural_gas_count);
 	response=response.replace("var nuclear_count", "var nuclear_count="+nuclear_count);
