@@ -86,87 +86,96 @@ app.get('/state/:selected_state', (req, res) => {
 			if (err) {
 				throw err;
 			}
-			
-			//Get the counts by year in to an array format to put in to the state.html template variables
-			coal_counts="[";		
-			natural_gas_counts=natural_gas_counts + "[";
-			nuclear_counts=nuclear_counts + "[";
-			petroleum_counts=petroleum_counts + "[";
-			renewable_counts=renewable_counts + "[";
-			
-			for(i = 0; i < Object.keys(rows).length; i++){
-				//start table row
-				table_data=table_data + "<tr>";
-				
-				//year column
-				table_data=table_data + "<td>"+rows[i].year+"</td>";
-				
-				//coal column
-				table_data=table_data + "<td>"+rows[i].coal+"</td>";
-				coal_counts = coal_counts + rows[i].coal;
-				
-				//nat gas column
-				table_data=table_data + "<td>"+rows[i].natural_gas+"</td>";
-				natural_gas_counts = natural_gas_counts + rows[i].natural_gas;
-				
-				//nuclear column
-				table_data=table_data + "<td>"+rows[i].nuclear+"</td>";
-				nuclear_counts = nuclear_counts + rows[i].nuclear;
-				
-				//petroleum column
-				table_data=table_data + "<td>"+rows[i].petroleum+"</td>";
-				petroleum_counts = petroleum_counts + rows[i].petroleum;
-				
-				//renewable column
-				table_data=table_data + "<td>"+rows[i].renewable+"</td>";
-				renewable_counts = renewable_counts + rows[i].renewable;
-				
-				//total column
-				table_data=table_data + "<td>"+(rows[i].coal + rows[i].natural_gas + rows[i].nuclear + rows[i].petroleum + rows[i].renewable)+"</td>";
-				
-				//end table row
-				table_data=table_data + "</tr>";
-				
-				if(i != (Object.keys(rows).length - 1)){
-					coal_counts = coal_counts + ", ";
-					natural_gas_counts = natural_gas_counts + ", ";
-					nuclear_counts = nuclear_counts + ", ";
-					petroleum_counts = petroleum_counts + ", ";
-					renewable_counts = renewable_counts + ", ";
+			let state_sql="SELECT state_name FROM States WHERE state_abbreviation='"+req.params.selected_state+"'";
+			db.all(state_sql, [], (err2, state_rows) => {
+				if (err2) {
+					throw err2;
 				}
-			}
-			coal_counts=coal_counts + "]";
-			natural_gas_counts=natural_gas_counts + "]";
-			nuclear_counts=nuclear_counts + "]";
-			petroleum_counts=petroleum_counts + "]";
-			renewable_counts=renewable_counts + "]";
-			
-			console.log("coal_counts: " + coal_counts);	
-			console.log("natural_gas_counts: " + natural_gas_counts);
-			console.log("nuclear_counts: " + nuclear_counts);
-			console.log("petroleum_counts: " + petroleum_counts);
-			console.log("renewable_counts: " + renewable_counts);
-			
-			
-			
-			let response = template.toString();
-			// modify `response` here
-			// modify title
-			response=response.replace("<title>US Energy Consumption</title>", "<title>"+req.params.selected_state + " Energy Consumption</title>");
-			// modify variables
-			response=response.replace("var state", "var state='"+req.params.selected_state+"'");
-			response=response.replace("var coal_counts", "var coal_counts="+coal_counts);
-			response=response.replace("var natural_gas_counts", "var natural_gas_counts="+natural_gas_counts);
-			response=response.replace("var nuclear_counts", "var nuclear_counts="+nuclear_counts);
-			response=response.replace("var petroleum_counts", "var petroleum_counts="+petroleum_counts);
-			response=response.replace("var renewable_counts", "var renewable_counts="+renewable_counts);
-			
-			//modify table
-			response=response.replace("<!-- Data to be inserted here -->", table_data);
-			
-			
-			console.log("\n\n\n\n\n\n\n\n"+response);
-			WriteHtml(res, response);
+				console.log("*******STATE FULL NAME: "+JSON.stringify(state_rows));
+				///////////////////////////////////////////
+				//Get the counts by year in to an array format to put in to the state.html template variables
+				coal_counts="[";		
+				natural_gas_counts=natural_gas_counts + "[";
+				nuclear_counts=nuclear_counts + "[";
+				petroleum_counts=petroleum_counts + "[";
+				renewable_counts=renewable_counts + "[";
+				
+				for(i = 0; i < Object.keys(rows).length; i++){
+					//start table row
+					table_data=table_data + "<tr>";
+					
+					//year column
+					table_data=table_data + "<td>"+rows[i].year+"</td>";
+					
+					//coal column
+					table_data=table_data + "<td>"+rows[i].coal+"</td>";
+					coal_counts = coal_counts + rows[i].coal;
+					
+					//nat gas column
+					table_data=table_data + "<td>"+rows[i].natural_gas+"</td>";
+					natural_gas_counts = natural_gas_counts + rows[i].natural_gas;
+					
+					//nuclear column
+					table_data=table_data + "<td>"+rows[i].nuclear+"</td>";
+					nuclear_counts = nuclear_counts + rows[i].nuclear;
+					
+					//petroleum column
+					table_data=table_data + "<td>"+rows[i].petroleum+"</td>";
+					petroleum_counts = petroleum_counts + rows[i].petroleum;
+					
+					//renewable column
+					table_data=table_data + "<td>"+rows[i].renewable+"</td>";
+					renewable_counts = renewable_counts + rows[i].renewable;
+					
+					//total column
+					table_data=table_data + "<td>"+(rows[i].coal + rows[i].natural_gas + rows[i].nuclear + rows[i].petroleum + rows[i].renewable)+"</td>";
+					
+					//end table row
+					table_data=table_data + "</tr>";
+					
+					if(i != (Object.keys(rows).length - 1)){
+						coal_counts = coal_counts + ", ";
+						natural_gas_counts = natural_gas_counts + ", ";
+						nuclear_counts = nuclear_counts + ", ";
+						petroleum_counts = petroleum_counts + ", ";
+						renewable_counts = renewable_counts + ", ";
+					}
+				}
+				coal_counts=coal_counts + "]";
+				natural_gas_counts=natural_gas_counts + "]";
+				nuclear_counts=nuclear_counts + "]";
+				petroleum_counts=petroleum_counts + "]";
+				renewable_counts=renewable_counts + "]";
+				
+				console.log("coal_counts: " + coal_counts);	
+				console.log("natural_gas_counts: " + natural_gas_counts);
+				console.log("nuclear_counts: " + nuclear_counts);
+				console.log("petroleum_counts: " + petroleum_counts);
+				console.log("renewable_counts: " + renewable_counts);
+				
+				
+				
+				let response = template.toString();
+				// modify `response` here
+				// modify title
+				response=response.replace("<title>US Energy Consumption</title>", "<title>"+req.params.selected_state + " Energy Consumption</title>");
+				// modify variables
+				response=response.replace("var state", "var state='"+req.params.selected_state+"'");
+				response=response.replace("var coal_counts", "var coal_counts="+coal_counts);
+				response=response.replace("var natural_gas_counts", "var natural_gas_counts="+natural_gas_counts);
+				response=response.replace("var nuclear_counts", "var nuclear_counts="+nuclear_counts);
+				response=response.replace("var petroleum_counts", "var petroleum_counts="+petroleum_counts);
+				response=response.replace("var renewable_counts", "var renewable_counts="+renewable_counts);
+				//modify h2
+				response=response.replace("<h2>Yearly Snapshot</h2>", "<h2>"+state_rows[0].state_name+" Yearly Snapshot</h2>");
+				//modify table
+				response=response.replace("<!-- Data to be inserted here -->", table_data);
+				
+				
+				console.log("\n\n\n\n\n\n\n\n"+response);
+				WriteHtml(res, response);
+				//////////////////////////////////////////
+			});
 		});
     }).catch((err) => {
         Write404Error(res);
@@ -257,9 +266,30 @@ function GetHtmlYear(template, rows, year){
 	response=response.replace("var nuclear_count", "var nuclear_count="+nuclear_count);
 	response=response.replace("var petroleum_count", "var petroleum_count="+petroleum_count);
 	response=response.replace("var renewable_count", "var renewable_count="+renewable_count);
+	//modify h2
+	response=response.replace("<h2>National Snapshot</h2>", "<h2>" + year + " National Snapshot</h2>");
 	//modify table
 	response=response.replace("<!-- Data to be inserted here -->", table_data);
-	
+	//modify prev and next buttons
+	if(parseInt(year)===1960){//If year is 1960 prev links back to itself
+		console.log("----------------------------1");
+		//prev button
+		response=response.replace('<a class="prev_next" href="">Prev</a>', '<a class="prev_next" href="http://localhost:8000/year/'+year+'">Prev</a>');
+		//next button
+		response=response.replace('<a class="prev_next" href="">Next</a>', '<a class="prev_next" href="http://localhost:8000/year/'+(parseInt(year)+1)+'">Next</a>');		
+	} else if(parseInt(year)===2017){//If year is most recent year(2017 currently) next should link back to itself
+		console.log("----------------------------2");
+		//prev button
+		response=response.replace('<a class="prev_next" href="">Prev</a>', '<a class="prev_next" href="http://localhost:8000/year/'+(parseInt(year)-1)+'">Prev</a>');
+		//next button
+		response=response.replace('<a class="prev_next" href="">Next</a>', '<a class="prev_next" href="http://localhost:8000/year/'+year+'">Next</a>') ;
+	} else{
+		console.log("----------------------------3");
+		//prev button
+		response=response.replace('<a class="prev_next" href="">Prev</a>', '<a class="prev_next" href="http://localhost:8000/year/'+(parseInt(year)-1)+'">Prev</a>');
+		//next button
+		response=response.replace('<a class="prev_next" href="">Next</a>', '<a class="prev_next" href="http://localhost:8000/year/'+(parseInt(year)+1)+'">Next</a>');	
+	}
 	return response
 }
 function GetHtmlType(template, rows, type){
