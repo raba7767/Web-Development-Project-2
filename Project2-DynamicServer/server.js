@@ -154,7 +154,7 @@ app.get('/state/:selected_state', (req, res) => {
 			// modify title
 			response=response.replace("<title>US Energy Consumption</title>", "<title>"+req.params.selected_state + " Energy Consumption</title>");
 			// modify variables
-			response=response.replace("var state", "var state="+req.params.selected_state);
+			response=response.replace("var state", "var state='"+req.params.selected_state+"'");
 			response=response.replace("var coal_counts", "var coal_counts="+coal_counts);
 			response=response.replace("var natural_gas_counts", "var natural_gas_counts="+natural_gas_counts);
 			response=response.replace("var nuclear_counts", "var nuclear_counts="+nuclear_counts);
