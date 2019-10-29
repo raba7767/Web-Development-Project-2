@@ -177,9 +177,18 @@ app.get('/state/:selected_state', (req, res) => {
 app.get('/energy-type/:selected_energy_type', (req, res) => {
 	console.log("SELECTED ENERGY TYPE: " + req.params.selected_energy_type);
     ReadFile(path.join(template_dir, 'energy.html')).then((template) => {
-        let response = template;
+        let sql = "SELECT " + req.params.selected_energy_type + ", STATE_ABBREVIATION, YEAR FROM Consumption ORDER BY YEAR";
+		db.all(sql, [], (err, rows) => {
+			if (err) {
+				throw err;
+			}
+			
+			//Call funtion to get html response to be sent back
+			let response = GetHtmlType(template, rows, req.params.selected_energy_type);
         // modify `response` here
+		console.log(response);
         WriteHtml(res, response);
+		});
     }).catch((err) => {
         Write404Error(res);
     });
@@ -253,6 +262,53 @@ function GetHtmlYear(template, rows, year){
 	
 	return response
 }
+function GetHtmlType(template, rows, type){
+	let energy_count = 0;
+
+
+	//Length of query, should be 51 for the 50 states + Washington DC
+	let length = Object.keys(rows).length;
+	console.log("LENGTH: " + length);
+	//Table data that will be inserted in consumption by year table
+	let table_data="";
+	for(i = 0; i < 58; i++){
+		total = 0;
+		console.log(rows[i]);
+		//Start new row in table
+		table_data=table_data+"<tr>";
+		
+		//1st column in table is the year 
+		table_data=table_data+"<td>"+(1960+i)+"</td>";
+		
+		
+		for(j = 0; j<51; j++){
+		//2nd column in table is AK
+		energy_count = energy_count + rows[j+(51*i)][type];
+		total = total + rows[j+(51*i)][type];
+		table_data=table_data+"<td>"+rows[j+(51*i)][type]+"</td>";
+		}
+			
+		//total usage
+		table_data=table_data+"<td>"+total+"</td>";
+		
+		//End this table row
+		table_data=table_data+"</tr>";
+	}			
+
+	let response = template.toString();
+	// modify `response` here
+	// modify title
+	response=response.replace("<title>US Energy Consumption</title>", "US " + type +" Consumption");
+	// modify variables
+	//response=response.replace("var year", "var year=2017");
+	response=response.replace("var energy_type;", "var energy_type="+"\""+type+"\"");
+	response=response.replace("var energy_counts;", "var energy_counts="+energy_count);
+	//modify table
+	response=response.replace("<!-- Data to be inserted here -->", table_data);
+	
+	return response;
+}
+
 
 function ReadFile(filename) {
     return new Promise((resolve, reject) => {
