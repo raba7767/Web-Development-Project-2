@@ -80,19 +80,20 @@ app.get('/state/:selected_state', (req, res) => {
 		let petroleum_counts="";
 		let renewable_counts="";
 		let table_data="";
+		//let all_states_sql="SELECT * FROM States";
 		//coal_counts data and formatting
 		let sql = "SELECT * FROM Consumption WHERE state_abbreviation='"+req.params.selected_state+"'";
 		db.all(sql, [], (err, rows) => {
 			if (err) {
 				throw err;
 			}
-			let state_sql="SELECT state_name FROM States WHERE state_abbreviation='"+req.params.selected_state+"'";
+			//let state_sql="SELECT state_name FROM States WHERE state_abbreviation='"+req.params.selected_state+"'";
+			let state_sql="SELECT * FROM States";
 			db.all(state_sql, [], (err2, state_rows) => {
 				if (err2) {
 					throw err2;
 				}
 				console.log("*******STATE FULL NAME: "+JSON.stringify(state_rows));
-				///////////////////////////////////////////
 				//Get the counts by year in to an array format to put in to the state.html template variables
 				coal_counts="[";		
 				natural_gas_counts=natural_gas_counts + "[";
@@ -147,6 +148,13 @@ app.get('/state/:selected_state', (req, res) => {
 				petroleum_counts=petroleum_counts + "]";
 				renewable_counts=renewable_counts + "]";
 				
+				let state_index;
+				for(i = 0; i < Object.keys(state_rows).length; i++){
+					if(state_rows[i].state_abbreviation === req.params.selected_state){
+						state_index = i;
+					}
+				}
+				
 				console.log("coal_counts: " + coal_counts);	
 				console.log("natural_gas_counts: " + natural_gas_counts);
 				console.log("nuclear_counts: " + nuclear_counts);
@@ -167,14 +175,23 @@ app.get('/state/:selected_state', (req, res) => {
 				response=response.replace("var petroleum_counts", "var petroleum_counts="+petroleum_counts);
 				response=response.replace("var renewable_counts", "var renewable_counts="+renewable_counts);
 				//modify h2
-				response=response.replace("<h2>Yearly Snapshot</h2>", "<h2>"+state_rows[0].state_name+" Yearly Snapshot</h2>");
+				response=response.replace("<h2>Yearly Snapshot</h2>", "<h2>"+state_rows[state_index].state_name+" Yearly Snapshot</h2>");
 				//modify table
 				response=response.replace("<!-- Data to be inserted here -->", table_data);
+				//modify next and prev state buttons
+				//next button
+				response=response.replace('<a class="prev_next" href="">YY</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'">'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'</a>');
+				//prev button
+				if(state_index==0){
+					response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[Object.keys(state_rows).length-1].state_abbreviation+'">'+state_rows[Object.keys(state_rows).length-1].state_abbreviation+'</a>');
+				} else {
+					response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[state_index-1].state_abbreviation+'">'+state_rows[state_index-1].state_abbreviation+'</a>');
+				}
+				
 				
 				
 				console.log("\n\n\n\n\n\n\n\n"+response);
 				WriteHtml(res, response);
-				//////////////////////////////////////////
 			});
 		});
     }).catch((err) => {
