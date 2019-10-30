@@ -63,14 +63,17 @@ app.get('/year/:selected_year', (req, res) => {
 			if (err) {
 				throw err;
 			}
-			
-			//Call funtion to get html response to be sent back
-			let response = GetHtmlYear(template, rows, req.params.selected_year);
-			
-			response=response.replace("var year", "var year="+req.params.selected_year);
+			if(Object.keys(rows).length===0){//If there was no year with the year gotten from the url
+				Write404ErrorYear(res, req.params.selected_year);
+			} else {
+				//Call funtion to get html response to be sent back
+				let response = GetHtmlYear(template, rows, req.params.selected_year);
+				
+				response=response.replace("var year", "var year="+req.params.selected_year);
 
-			console.log("\n\n\n\n\n\n\n\n"+response);
-			WriteHtml(res, response);
+				console.log("\n\n\n\n\n\n\n\n"+response);
+				WriteHtml(res, response);
+			}
 		});
     }).catch((err) => {
         Write404Error(res);
@@ -93,111 +96,115 @@ app.get('/state/:selected_state', (req, res) => {
 			if (err) {
 				throw err;
 			}
-			let state_sql="SELECT * FROM States";
-			db.all(state_sql, [], (err2, state_rows) => {
-				if (err2) {
-					throw err2;
-				}
-				console.log("*******STATE FULL NAME: "+JSON.stringify(state_rows));
-				//Get the counts by year in to an array format to put in to the state.html template variables
-				coal_counts="[";		
-				natural_gas_counts=natural_gas_counts + "[";
-				nuclear_counts=nuclear_counts + "[";
-				petroleum_counts=petroleum_counts + "[";
-				renewable_counts=renewable_counts + "[";
-				
-				for(i = 0; i < Object.keys(rows).length; i++){
-					//start table row
-					table_data=table_data + "<tr>";
-					
-					//year column
-					table_data=table_data + "<td>"+rows[i].year+"</td>";
-					
-					//coal column
-					table_data=table_data + "<td>"+rows[i].coal+"</td>";
-					coal_counts = coal_counts + rows[i].coal;
-					
-					//nat gas column
-					table_data=table_data + "<td>"+rows[i].natural_gas+"</td>";
-					natural_gas_counts = natural_gas_counts + rows[i].natural_gas;
-					
-					//nuclear column
-					table_data=table_data + "<td>"+rows[i].nuclear+"</td>";
-					nuclear_counts = nuclear_counts + rows[i].nuclear;
-					
-					//petroleum column
-					table_data=table_data + "<td>"+rows[i].petroleum+"</td>";
-					petroleum_counts = petroleum_counts + rows[i].petroleum;
-					
-					//renewable column
-					table_data=table_data + "<td>"+rows[i].renewable+"</td>";
-					renewable_counts = renewable_counts + rows[i].renewable;
-					
-					//total column
-					table_data=table_data + "<td>"+(rows[i].coal + rows[i].natural_gas + rows[i].nuclear + rows[i].petroleum + rows[i].renewable)+"</td>";
-					
-					//end table row
-					table_data=table_data + "</tr>";
-					
-					if(i != (Object.keys(rows).length - 1)){
-						coal_counts = coal_counts + ", ";
-						natural_gas_counts = natural_gas_counts + ", ";
-						nuclear_counts = nuclear_counts + ", ";
-						petroleum_counts = petroleum_counts + ", ";
-						renewable_counts = renewable_counts + ", ";
+			if (Object.keys(rows).length===0){//If there was no state with the name gotten from the url
+				Write404ErrorState(res, req.params.selected_state)
+			} else {
+				let state_sql="SELECT * FROM States";
+				db.all(state_sql, [], (err2, state_rows) => {
+					if (err2) {
+						throw err2;
 					}
-				}
-				coal_counts=coal_counts + "]";
-				natural_gas_counts=natural_gas_counts + "]";
-				nuclear_counts=nuclear_counts + "]";
-				petroleum_counts=petroleum_counts + "]";
-				renewable_counts=renewable_counts + "]";
-				
-				let state_index;
-				for(i = 0; i < Object.keys(state_rows).length; i++){
-					if(state_rows[i].state_abbreviation === req.params.selected_state){
-						state_index = i;
+					console.log("*******STATE FULL NAME: "+JSON.stringify(state_rows));
+					//Get the counts by year in to an array format to put in to the state.html template variables
+					coal_counts="[";		
+					natural_gas_counts=natural_gas_counts + "[";
+					nuclear_counts=nuclear_counts + "[";
+					petroleum_counts=petroleum_counts + "[";
+					renewable_counts=renewable_counts + "[";
+					
+					for(i = 0; i < Object.keys(rows).length; i++){
+						//start table row
+						table_data=table_data + "<tr>";
+						
+						//year column
+						table_data=table_data + "<td>"+rows[i].year+"</td>";
+						
+						//coal column
+						table_data=table_data + "<td>"+rows[i].coal+"</td>";
+						coal_counts = coal_counts + rows[i].coal;
+						
+						//nat gas column
+						table_data=table_data + "<td>"+rows[i].natural_gas+"</td>";
+						natural_gas_counts = natural_gas_counts + rows[i].natural_gas;
+						
+						//nuclear column
+						table_data=table_data + "<td>"+rows[i].nuclear+"</td>";
+						nuclear_counts = nuclear_counts + rows[i].nuclear;
+						
+						//petroleum column
+						table_data=table_data + "<td>"+rows[i].petroleum+"</td>";
+						petroleum_counts = petroleum_counts + rows[i].petroleum;
+						
+						//renewable column
+						table_data=table_data + "<td>"+rows[i].renewable+"</td>";
+						renewable_counts = renewable_counts + rows[i].renewable;
+						
+						//total column
+						table_data=table_data + "<td>"+(rows[i].coal + rows[i].natural_gas + rows[i].nuclear + rows[i].petroleum + rows[i].renewable)+"</td>";
+						
+						//end table row
+						table_data=table_data + "</tr>";
+						
+						if(i != (Object.keys(rows).length - 1)){
+							coal_counts = coal_counts + ", ";
+							natural_gas_counts = natural_gas_counts + ", ";
+							nuclear_counts = nuclear_counts + ", ";
+							petroleum_counts = petroleum_counts + ", ";
+							renewable_counts = renewable_counts + ", ";
+						}
 					}
-				}
+					coal_counts=coal_counts + "]";
+					natural_gas_counts=natural_gas_counts + "]";
+					nuclear_counts=nuclear_counts + "]";
+					petroleum_counts=petroleum_counts + "]";
+					renewable_counts=renewable_counts + "]";
+					
+					let state_index;
+					for(i = 0; i < Object.keys(state_rows).length; i++){
+						if(state_rows[i].state_abbreviation === req.params.selected_state){
+							state_index = i;
+						}
+					}
+					
+					
+					console.log("coal_counts: " + coal_counts);	
+					console.log("natural_gas_counts: " + natural_gas_counts);
+					console.log("nuclear_counts: " + nuclear_counts);
+					console.log("petroleum_counts: " + petroleum_counts);
+					console.log("renewable_counts: " + renewable_counts);			
+					
+					let response = template.toString();
+					// modify `response` here
+					// modify title
+					response=response.replace("<title>US Energy Consumption</title>", "<title>"+req.params.selected_state + " Energy Consumption</title>");
+					// modify variables
+					response=response.replace("var state", "var state='"+req.params.selected_state+"'");
+					response=response.replace("var coal_counts", "var coal_counts="+coal_counts);
+					response=response.replace("var natural_gas_counts", "var natural_gas_counts="+natural_gas_counts);
+					response=response.replace("var nuclear_counts", "var nuclear_counts="+nuclear_counts);
+					response=response.replace("var petroleum_counts", "var petroleum_counts="+petroleum_counts);
+					response=response.replace("var renewable_counts", "var renewable_counts="+renewable_counts);
+					//modify h2
+					response=response.replace("<h2>Yearly Snapshot</h2>", "<h2>"+state_rows[state_index].state_name+" Yearly Snapshot</h2>");
+					//modify table
+					response=response.replace("<!-- Data to be inserted here -->", table_data);
+					//modify state img
+					response=response.replace('<img src="/images/noimage.jpg" alt="No Image" width="250" height="auto" />', '<img src="'+state_images[req.params.selected_state]+'" alt="'+req.params.selected_state+'" width="250" height="auto" />');
+					//modify next and prev state buttons
+					//next button
+					response=response.replace('<a class="prev_next" href="">YY</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'">'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'</a>');
+					//prev button
+					if(state_index==0){
+						response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[Object.keys(state_rows).length-1].state_abbreviation+'">'+state_rows[Object.keys(state_rows).length-1].state_abbreviation+'</a>');
+					} else {
+						response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[state_index-1].state_abbreviation+'">'+state_rows[state_index-1].state_abbreviation+'</a>');
+					}
+					
+					console.log("\n\n\n\n\n\n\n\n"+response);
+					WriteHtml(res, response);
 				
-				
-				console.log("coal_counts: " + coal_counts);	
-				console.log("natural_gas_counts: " + natural_gas_counts);
-				console.log("nuclear_counts: " + nuclear_counts);
-				console.log("petroleum_counts: " + petroleum_counts);
-				console.log("renewable_counts: " + renewable_counts);			
-				
-				let response = template.toString();
-				// modify `response` here
-				// modify title
-				response=response.replace("<title>US Energy Consumption</title>", "<title>"+req.params.selected_state + " Energy Consumption</title>");
-				// modify variables
-				response=response.replace("var state", "var state='"+req.params.selected_state+"'");
-				response=response.replace("var coal_counts", "var coal_counts="+coal_counts);
-				response=response.replace("var natural_gas_counts", "var natural_gas_counts="+natural_gas_counts);
-				response=response.replace("var nuclear_counts", "var nuclear_counts="+nuclear_counts);
-				response=response.replace("var petroleum_counts", "var petroleum_counts="+petroleum_counts);
-				response=response.replace("var renewable_counts", "var renewable_counts="+renewable_counts);
-				//modify h2
-				response=response.replace("<h2>Yearly Snapshot</h2>", "<h2>"+state_rows[state_index].state_name+" Yearly Snapshot</h2>");
-				//modify table
-				response=response.replace("<!-- Data to be inserted here -->", table_data);
-				//modify state img
-				response=response.replace('<img src="/images/noimage.jpg" alt="No Image" width="250" height="auto" />', '<img src="'+state_images[req.params.selected_state]+'" alt="'+req.params.selected_state+'" width="250" height="auto" />');
-				//modify next and prev state buttons
-				//next button
-				response=response.replace('<a class="prev_next" href="">YY</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'">'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'</a>');
-				//prev button
-				if(state_index==0){
-					response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[Object.keys(state_rows).length-1].state_abbreviation+'">'+state_rows[Object.keys(state_rows).length-1].state_abbreviation+'</a>');
-				} else {
-					response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[state_index-1].state_abbreviation+'">'+state_rows[state_index-1].state_abbreviation+'</a>');
-				}
-				
-				console.log("\n\n\n\n\n\n\n\n"+response);
-				WriteHtml(res, response);
-			
-			});
+				});
+			}
 		});
     }).catch((err) => {
         Write404Error(res);
@@ -378,6 +385,12 @@ function ReadFile(filename) {
 function Write404Error(res) {
     res.writeHead(404, {'Content-Type': 'text/plain'});
     res.write('Error: file not found');
+    res.end();
+}
+
+function Write404ErrorYear(res, year) {
+    res.writeHead(404, {'Content-Type': 'text/plain'});
+    res.write('Error: no data for year '+year);
     res.end();
 }
 
