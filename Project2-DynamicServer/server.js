@@ -24,6 +24,13 @@ var db = new sqlite3.Database(db_filename, sqlite3.OPEN_READONLY, (err) => {
     }
 });
 
+//Get state images json object
+var state_images;
+fs.readFile(path.join(public_dir, "state_images.json"), (err, data) => {
+	console.log('data: ' + data);
+	state_images = JSON.parse(data);
+});
+
 app.use(express.static(public_dir));
 
 
@@ -80,14 +87,12 @@ app.get('/state/:selected_state', (req, res) => {
 		let petroleum_counts="";
 		let renewable_counts="";
 		let table_data="";
-		//let all_states_sql="SELECT * FROM States";
 		//coal_counts data and formatting
 		let sql = "SELECT * FROM Consumption WHERE state_abbreviation='"+req.params.selected_state+"'";
 		db.all(sql, [], (err, rows) => {
 			if (err) {
 				throw err;
 			}
-			//let state_sql="SELECT state_name FROM States WHERE state_abbreviation='"+req.params.selected_state+"'";
 			let state_sql="SELECT * FROM States";
 			db.all(state_sql, [], (err2, state_rows) => {
 				if (err2) {
@@ -155,13 +160,12 @@ app.get('/state/:selected_state', (req, res) => {
 					}
 				}
 				
+				
 				console.log("coal_counts: " + coal_counts);	
 				console.log("natural_gas_counts: " + natural_gas_counts);
 				console.log("nuclear_counts: " + nuclear_counts);
 				console.log("petroleum_counts: " + petroleum_counts);
-				console.log("renewable_counts: " + renewable_counts);
-				
-				
+				console.log("renewable_counts: " + renewable_counts);			
 				
 				let response = template.toString();
 				// modify `response` here
@@ -178,6 +182,8 @@ app.get('/state/:selected_state', (req, res) => {
 				response=response.replace("<h2>Yearly Snapshot</h2>", "<h2>"+state_rows[state_index].state_name+" Yearly Snapshot</h2>");
 				//modify table
 				response=response.replace("<!-- Data to be inserted here -->", table_data);
+				//modify state img
+				response=response.replace('<img src="/images/noimage.jpg" alt="No Image" width="250" height="auto" />', '<img src="'+state_images[req.params.selected_state]+'" alt="'+req.params.selected_state+'" width="250" height="auto" />');
 				//modify next and prev state buttons
 				//next button
 				response=response.replace('<a class="prev_next" href="">YY</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'">'+state_rows[(state_index+1)%(Object.keys(state_rows).length)].state_abbreviation+'</a>');
@@ -188,10 +194,9 @@ app.get('/state/:selected_state', (req, res) => {
 					response=response.replace('<a class="prev_next" href="">XX</a>', '<a class="prev_next" href="http://localhost:8000/state/'+state_rows[state_index-1].state_abbreviation+'">'+state_rows[state_index-1].state_abbreviation+'</a>');
 				}
 				
-				
-				
 				console.log("\n\n\n\n\n\n\n\n"+response);
 				WriteHtml(res, response);
+			
 			});
 		});
     }).catch((err) => {
@@ -373,6 +378,12 @@ function ReadFile(filename) {
 function Write404Error(res) {
     res.writeHead(404, {'Content-Type': 'text/plain'});
     res.write('Error: file not found');
+    res.end();
+}
+
+function Write404ErrorState(res, state) {
+    res.writeHead(404, {'Content-Type': 'text/plain'});
+    res.write('Error: no data for state '+state);
     res.end();
 }
 
