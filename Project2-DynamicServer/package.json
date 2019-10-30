@@ -3,13 +3,13 @@
     "version": "0.0.0",
     "description": "Dynamic Web Server using Node JS",
     "author": {
-        "name": "",
-        "email": ""
+        "name": "Jacob Rabaey",
+        "email": "raba7767@stthomas.edu"
     },
     "contributors": [
         {
-            "name": "",
-            "email": ""
+            "name": "Leo Molitor",
+            "email": "moli1133@stthomas.edu"
         },
         {
             "name": "",
@@ -19,7 +19,7 @@
     "main": "server.js",
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "https://github.com/raba7767/Web-Development-Project-2"
     },
     "dependencies": {
         "express": "^4.17.1",
