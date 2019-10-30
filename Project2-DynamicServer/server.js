@@ -214,6 +214,13 @@ app.get('/state/:selected_state', (req, res) => {
 // GET request handler for '/energy-type/*'
 app.get('/energy-type/:selected_energy_type', (req, res) => {
 	console.log("SELECTED ENERGY TYPE: " + req.params.selected_energy_type);
+	if(req.params.selected_energy_type !== "petroleum" && req.params.selected_energy_type !== "natural_gas" && req.params.selected_energy_type !== "renewable" && req.params.selected_energy_type !== "nuclear" && req.params.selected_energy_type !== "coal")
+	{
+		res.writeHead(404, {'Content-Type': 'text/plain'});
+            res.write('ERROR: ' + req.params.selected_energy_type + ' is not a valid energy type');
+            res.end();
+			throw err;
+	}
     ReadFile(path.join(template_dir, 'energy.html')).then((template) => {
         let sql = "SELECT " + req.params.selected_energy_type + ", STATE_ABBREVIATION, YEAR FROM Consumption ORDER BY YEAR";
 		db.all(sql, [], (err, rows) => {
@@ -323,7 +330,7 @@ function GetHtmlYear(template, rows, year){
 }
 function GetHtmlType(template, rows, type){
 	let energy_count = 0;
-
+	let imageUrls = ["https://image.shutterstock.com/image-photo/panoramic-view-nuclear-power-plant-600w-588385358.jpg", "https://image.shutterstock.com/image-photo/open-pit-mine-extractive-industry-260nw-1191948838.jpg", "https://image.shutterstock.com/image-photo/natural-gas-tank-600w-238898095.jpg", "https://image.shutterstock.com/image-photo/oil-pump-rig-energy-industrial-600w-115189144.jpg", "https://image.shutterstock.com/image-photo/solar-panels-wind-turbines-electricity-600w-397235554.jpg"]
 
 	//Length of query, should be 51 for the 50 states + Washington DC
 	let length = Object.keys(rows).length;
@@ -342,18 +349,25 @@ function GetHtmlType(template, rows, type){
 		
 		for(j = 0; j<51; j++){
 		//2nd column in table is AK
-		energy_count = energy_count + rows[j+(51*i)][type];
 		total = total + rows[j+(51*i)][type];
 		table_data=table_data+"<td>"+rows[j+(51*i)][type]+"</td>";
 		}
-			
 		//total usage
 		table_data=table_data+"<td>"+total+"</td>";
-		
 		//End this table row
 		table_data=table_data+"</tr>";
-	}			
-
+		
+	}	
+	energy_count = "{";
+	for(i = 0; i<51; i++){
+		energy_count = energy_count + rows[i].state_abbreviation + ": [";
+		for(j=0; j<58; j++){
+		energy_count = energy_count + rows[i+(51*j)][type]+",";
+		
+		}
+		energy_count = energy_count + "],";
+	}
+	energy_count = energy_count + "}";
 	let response = template.toString();
 	// modify `response` here
 	// modify title
@@ -364,6 +378,58 @@ function GetHtmlType(template, rows, type){
 	response=response.replace("var energy_counts;", "var energy_counts="+energy_count);
 	//modify table
 	response=response.replace("<!-- Data to be inserted here -->", table_data);
+	// modify images and next/prev buttons
+	if(type === "coal")
+	{
+		response=response.replace("/images/noimage.jpg", imageUrls[1]);
+		response=response.replace("No Image", type);
+		response=response.replace("Consumption Snapshot", type + " Consumption Snapshot");
+		response=response.replace("--prev--", "http://localhost:8000/energy-type/renewable");
+		response=response.replace("--next--", "http://localhost:8000/energy-type/natural_gas");
+		response=response.replace("XX", "renewable");
+		response=response.replace("YY", "natural gas");
+		
+	}
+	if(type === "natural_gas")
+	{
+		response=response.replace("/images/noimage.jpg", imageUrls[2]);
+		response=response.replace("No Image", type);
+		response=response.replace("Consumption Snapshot", type + " Consumption Snapshot");
+		response=response.replace("--prev--", "http://localhost:8000/energy-type/coal");
+		response=response.replace("--next--", "http://localhost:8000/energy-type/nuclear");
+		response=response.replace("XX", "coal");
+		response=response.replace("YY", "nuclear");
+	}
+	if(type === "petroleum")
+	{
+		response=response.replace("/images/noimage.jpg", imageUrls[3]);
+		response=response.replace("No Image", type);
+		response=response.replace("Consumption Snapshot", type + " Consumption Snapshot");
+		response=response.replace("--prev--", "http://localhost:8000/energy-type/nuclear");
+		response=response.replace("--next--", "http://localhost:8000/energy-type/natural_gas");
+		response=response.replace("XX", "nuclear");
+		response=response.replace("YY", "natural gas");
+	}
+	if(type === "renewable")
+	{
+		response=response.replace("/images/noimage.jpg", imageUrls[4]);
+		response=response.replace("No Image", type);
+		response=response.replace("Consumption Snapshot", type + " Consumption Snapshot");
+		response=response.replace("--prev--", "http://localhost:8000/energy-type/petroleum");
+		response=response.replace("--next--", "http://localhost:8000/energy-type/coal");
+		response=response.replace("XX", "petroleum");
+		response=response.replace("YY", "coal");
+	}
+	if(type === "nuclear")
+	{
+		response=response.replace("/images/noimage.jpg", imageUrls[0]);
+		response=response.replace("No Image", type);
+		response=response.replace("Consumption Snapshot", type + " Consumption Snapshot");
+		response=response.replace("--prev--", "http://localhost:8000/energy-type/natural_gas");
+		response=response.replace("--next--", "http://localhost:8000/energy-type/petroleum");
+		response=response.replace("XX", "natural gas");
+		response=response.replace("YY", "petroleum");
+	}
 	
 	return response;
 }
