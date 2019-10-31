@@ -58,12 +58,13 @@ app.get('/', (req, res) => {
 // GET request handler for '/year/*'
 app.get('/year/:selected_year', (req, res) => {	
     ReadFile(path.join(template_dir, 'year.html')).then((template) => {		
+		
 		let sql = "SELECT * FROM Consumption WHERE year="+req.params.selected_year;
 		db.all(sql, [], (err, rows) => {
 			if (err) {
-				throw err;
+				Write404ErrorYear(res, req.params.selected_year);
 			}
-			if(Object.keys(rows).length===0){//If there was no year with the year gotten from the url
+			else if(Object.keys(rows).length===0){//If there was no year with the year gotten from the url
 				Write404ErrorYear(res, req.params.selected_year);
 			} else {
 				//Call funtion to get html response to be sent back
@@ -406,9 +407,9 @@ function GetHtmlType(template, rows, type){
 		response=response.replace("No Image", type);
 		response=response.replace("Consumption Snapshot", type + " Consumption Snapshot");
 		response=response.replace("--prev--", "http://localhost:8000/energy-type/nuclear");
-		response=response.replace("--next--", "http://localhost:8000/energy-type/natural_gas");
+		response=response.replace("--next--", "http://localhost:8000/energy-type/renewable");
 		response=response.replace("XX", "nuclear");
-		response=response.replace("YY", "natural gas");
+		response=response.replace("YY", "renewable");
 	}
 	if(type === "renewable")
 	{
